@@ -1,0 +1,9 @@
+universe = vanilla
+executable = $LOCAL_CALLER_SCRIPT_PATH
+output = $OUTPUT_FILE
+error = $ERROR_FILE
+log = $LOG_FILE
+arguments = ""
+requirements = regexp("^(texel|ray|pixel|edge|corona)..", TARGET.Machine)
+queue 1
++experimentname = test1
