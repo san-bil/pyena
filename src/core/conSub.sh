@@ -13,7 +13,17 @@
 unset LD_LIBRARY_PATH
 unset OSG_LD_LIBRARY_PATH
 
-kinit $USER@IC.AC.UK -k -t .kerb/$USER.keytab;
+is_remote=$1
+condor_task_desc_path=$2
+presubmit_auth_steps=$3
+remote_host=$4
+ssh_keyfile=$5
 
-setenv PATH ${PATH}:${CONDOR_HOME}/bin
-condor_submit $1
+
+if [ "$is_remote" == "1" ]
+then
+    ssh -i $ssh_keyfile  -o StrictHostKeyChecking=no -o ConnectTimeout=5 $remote_host 'PATH=$PATH:$CONDOR_HOME/bin;'"$presubmit_auth_steps"';hostname; condor_submit '"$condor_task_desc_path" 
+else
+    echo is_local
+    PATH=$PATH:$CONDOR_HOME/bin; $(eval echo $presubmit_auth_steps ) ;hostname; cd $(dirname $condor_task_desc_path); condor_submit $condor_task_desc_path
+fi

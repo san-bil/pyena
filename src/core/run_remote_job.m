@@ -5,11 +5,9 @@ try_folder = [task_dir filesep 'trys'];
 my_mkdir(try_folder)
 create_increment_file( 'condor', try_folder, 'try', 1 );
 
-
+global job_root_dir
 load(experiment_setup_data_path,'worker_task','worker_args');
-%src_paths = {...}
-%executer = @fn_handle
-%args = {...}
+job_root_dir = task_dir;
 
 worker_result = worker_task(worker_args{:});
 

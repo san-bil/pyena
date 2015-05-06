@@ -1,4 +1,4 @@
-function out = condor_parfor_test_worker(in)
+function out = condor_parfor_test_worker(in, opts)
 
 my_mult = 2^in;
 my_date = get_simple_date();

@@ -4,6 +4,5 @@ output = $OUTPUT_FILE
 error = $ERROR_FILE
 log = $LOG_FILE
 arguments = ""
-$JOB_REQUIREMENTS
 queue 1
 +experimentname = test1

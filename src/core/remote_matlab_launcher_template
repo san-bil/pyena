@@ -2,12 +2,17 @@
 echo `hostname`
 
 cd $TASK_DIR
-if [ -d "/usr/lib/matlab/R2013a" ]; then
-    /usr/lib/matlab/R2013a/bin/matlab -nodisplay -r "remote_add_relevant_src_paths('$DATA_PATH');run_remote_job('$DATA_PATH');"
-elif [ -d "/usr/lib/matlab/R2013b" ]; then 
-    /usr/lib/matlab/R2013b/bin/matlab -nodisplay -r "remote_add_relevant_src_paths('$DATA_PATH');run_remote_job('$DATA_PATH');"
-elif [ -d "/usr/lib/matlab/R2014a" ]; then 
-    /usr/lib/matlab/R2014a/bin/matlab -nodisplay -r "remote_add_relevant_src_paths('$DATA_PATH');run_remote_job('$DATA_PATH');"
+
+matlab_version=$(readlink -f $(which matlab) | grep -oP "R[0-9]+[ab]+" | grep -oP "[0-9]+");
+matlab_gt_2013=$(python -c "print $matlab_version >= 2013")
+
+if [ "$matlab_gt_2013"  == "True" ]
+then
+
+    matlab -nodisplay -r "remote_add_relevant_src_paths('$DATA_PATH');run_remote_job('$DATA_PATH');"
+
 else
-    echo -e 'No Matlab installations found.\n'
+
+    echo -e "Matador: The only Matlab installation found is $matlab_version, which is too old."
+
 fi

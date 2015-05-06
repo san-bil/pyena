@@ -1,4 +1,4 @@
-function session_object = create_condor_session(condor_task_root_dir, volatile_src_paths, options)
+function session_object = create_condor_session(condor_task_root_dir, volatile_src_paths, session_options)
 
 % condor_task_root_dir = root directory for all the condor tasks to be
 %                        launched from this session
@@ -17,34 +17,24 @@ function session_object = create_condor_session(condor_task_root_dir, volatile_s
 %                        https://kb.iu.edu/d/aumh#create). If not supplied,
 %                        we'll try to find one.
 
-rsync_args = kv_get('condor_rsync_args',options,{});
+rsync_args = kv_get('condor_rsync_args',session_options,{'--exclude="*.mat"'});
 
-volatile_src_task_path = [condor_task_root_dir filesep 'volatile'];
-my_mkdir(volatile_src_task_path);
+submit_host=kv_get('submit_host',session_options);
+is_remote_submit_host = ~islocalhost(submit_host);
+volatile_src_task_path = path_join(condor_task_root_dir,'volatile');
+volatile_src_paths = my_unique([force_fat_matrix(volatile_src_paths) get_matador_dir()]);
 
-
-matador_dir = strsplit_inc_delim(mfilename('fullpath'),'matador');
-volatile_src_paths{end+1} = matador_dir;
-volatile_src_paths = my_unique(volatile_src_paths);
-copy_files(volatile_src_paths,volatile_src_task_path,1,rsync_args);
+if(is_remote_submit_host)
+    ssh_key=kv_get('ssh_key',session_options,default_ssh_key);
+    my_mkdir(volatile_src_task_path,submit_host,ssh_key);
+    rsyncs(volatile_src_paths, volatile_src_task_path, rsync_args,submit_host,ssh_key, 'push')
+    git_clone(get_matador_dep_repos(),volatile_src_task_path,submit_host,ssh_key)
+else
+    my_mkdir(volatile_src_task_path);
+    rsyncs(volatile_src_paths,volatile_src_task_path,rsync_args);
+    git_clone(get_matador_dep_repos(),volatile_src_task_path);
+end
 
 job_list={};
 session_jobs_tags = {};
-
-remote_submit = kv_get('remote_submit',options,0);
-session_options = kv_create(remote_submit);
-
-if(remote_submit)
-    
-    if(kv_haskey('remote_submit_host',options))
-        remote_submit_host = kv_get('remote_submit_host',options);
-    else
-        remote_submit_host_getter = kv_get('remote_submit_host_getter',options,@get_good_doc_condor_submitter);
-        remote_submit_host = remote_submit_host_getter();
-    end
-    
-    session_options = kv_set('remote_submit_host',remote_submit_host,session_options);
-end
-
-
-session_object = kv_create(session_options,condor_task_root_dir, volatile_src_task_path, job_list, session_jobs_tags);
+session_object = kv_create(session_options,submit_host,condor_task_root_dir, volatile_src_task_path, job_list, session_jobs_tags);

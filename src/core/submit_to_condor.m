@@ -1,71 +1,67 @@
-function submit_to_condor(data_path,task_dir,options)
+function job_id = submit_to_condor(data_path,task_dir,options)
 
-if(~exist('options','var'))
-    options={};
+if(~exist('options','var')),options={};end
+if(~exist('data_path','var')),task_dir = dirname(data_path);end
+
+submit_host = kv_get('submit_host',options,'');
+is_remote=~islocalhost(submit_host);
+
+CONDOR_TASK_DESC_PATH = path_join(task_dir,'condor_task_desc.cmd');
+OUTPUT_FILE = path_join(task_dir,'output.txt');
+ERROR_FILE = path_join(task_dir,'err.txt');
+LOG_FILE = path_join(task_dir,'log.txt');
+LOCAL_CALLER_SCRIPT_PATH = path_join(task_dir,'remote_matlab_launcher.sh');
+
+current_dir = dirname(mfilename('fullpath'));
+
+condor_profile_provider = kv_get('condor_profile_provider',options,@get_vanilla_condor_profile);
+condor_profile = condor_profile_provider();
+JOB_REQUIREMENTS = kv_get('condor_job_requirements',condor_profile,'');
+presubmit_auth_steps = kv_get('presubmit_auth_steps',condor_profile,'');
+
+condor_task_desc_dictionary = kv_create(OUTPUT_FILE,ERROR_FILE,LOG_FILE,LOCAL_CALLER_SCRIPT_PATH,JOB_REQUIREMENTS);
+
+if(is_remote)
+    
+    ssh_key=kv_get('ssh_key',options,default_ssh_key);
+    
+    %###
+    tmpfile_path_1=get_matlab_func_tempfile('sh');
+    Templater.fill(path_join(current_dir,'remote_matlab_launcher_template'),...
+               {'DATA_PATH',data_path;'TASK_DIR',task_dir;},...
+               tmpfile_path_1,...
+               newline);
+    rsync(tmpfile_path_1, LOCAL_CALLER_SCRIPT_PATH, {},submit_host,ssh_key, 'push');
+    
+    %###
+    tmpfile_path_2=get_matlab_func_tempfile('cmd');
+    Templater.fill(path_join(current_dir,'condor_task_desc_template2'),condor_task_desc_dictionary,tmpfile_path_2,newline);
+    rsync(tmpfile_path_2, CONDOR_TASK_DESC_PATH, {},submit_host,ssh_key, 'push');
+    
+    %###
+    rsync(path_join(current_dir,'remote_add_relevant_src_paths.m'), path_join(task_dir,'remote_add_relevant_src_paths.m'), {},submit_host,ssh_key, 'push');
+    chmod(LOCAL_CALLER_SCRIPT_PATH,'755',submit_host,ssh_key);
+else
+    Templater.fill(path_join(current_dir,'remote_matlab_launcher_template'),...
+               {'DATA_PATH',data_path;'TASK_DIR',task_dir;},...
+               LOCAL_CALLER_SCRIPT_PATH,...
+               newline);
+    Templater.fill(path_join(current_dir,'condor_task_desc_template2'),condor_task_desc_dictionary,CONDOR_TASK_DESC_PATH,newline);
+    rsync(path_join(current_dir,'remote_add_relevant_src_paths.m'), path_join(task_dir,'remote_add_relevant_src_paths.m'));
+    chmod(LOCAL_CALLER_SCRIPT_PATH,'755');
+
 end
 
 
 
-current_dir = get_parent_dir(mfilename('fullpath'));
-
-if(~exist('data_path','var'))
-    task_dir = get_parent_dir(data_path);
+if(~kv_get('fake_submit',options,0))
+    condor_submission_script = path_join(current_dir,'conSub_remote3.sh');
+    ssh_keyfile = kv_get('ssh_keyfile',options,default_ssh_key);
+    chmod(condor_submission_script,'755');
+    cmd = concat_cell_string_array({condor_submission_script, num2str(is_remote), CONDOR_TASK_DESC_PATH, presubmit_auth_steps, submit_host, ssh_keyfile},' ',1);
+    [~, stdout] = system_e(cmd);
+    job_id = condor_get_job_submission_id(stdout);
+    write_cell_of_strings_to_file(path_join(task_dir,'condor_job_id.txt'),{job_id})
+else
+    disp(['Set up job in ' task_dir]);
 end
-%%
-condor_task_desc_path = [task_dir filesep 'condor_task_desc.cmd'];
-
-outputFile = [task_dir filesep 'output.txt'];
-errorFile = [task_dir filesep 'err.txt'];
-logFile = [task_dir filesep 'log.txt'];
-remote_launcher_script_path = [task_dir filesep 'remote_matlab_launcher.sh'];
-%%
-remote_task_dictionary = {
-              'DATA_PATH',data_path;
-              'TASK_DIR',task_dir;
-              };
-
-Templater.fill([current_dir filesep 'remote_matlab_launcher_template'],...
-               remote_task_dictionary,...
-               remote_launcher_script_path,...
-               '\n');
-%%
-condor_task_desc_dictionary = {
-              'OUTPUT_FILE',outputFile;
-              'ERROR_FILE',errorFile;
-              'LOG_FILE',logFile;
-              'LOCAL_CALLER_SCRIPT_PATH',remote_launcher_script_path
-              };
-          
-Templater.fill([current_dir filesep 'condor_task_desc_template'],...
-               condor_task_desc_dictionary,...
-               condor_task_desc_path,...
-               '\n');
-           
-copyfile([current_dir filesep 'remote_add_relevant_src_paths.m'], [task_dir filesep 'remote_add_relevant_src_paths.m']);
-[~, chmod_result] = system(['chmod 755 ' remote_launcher_script_path],'-echo'); 
-
-%%
-
-fake_submit = kv_get('fake_submit',options,0);
-remote_submit = kv_get('remote_submit',options,0);
-
-if(fake_submit==0)
-    if(remote_submit)
-        
-        remote_submit_host = kv_get('remote_submit_host',options);
-        
-        system(['chmod 755 ' current_dir filesep 'conSub_remote.sh']);
-        job_submit_cmd_string = [current_dir filesep 'conSub_remote.sh', ' ',condor_task_desc_path, ' ', remote_submit_host];
-        [exitVal, sysResult] = system(job_submit_cmd_string);
-    else
-        system(['chmod 755 ' current_dir filesep 'conSub.sh'])
-        job_submit_cmd_string = [current_dir filesep 'conSub.sh', ' ',condor_task_desc_path];
-        [exitVal, sysResult] = system(job_submit_cmd_string);
-    end
-end
-
-verbose = kv_get('verbose',options,1);
-if(verbose)
-    disp(sysResult)
-end  
-                
