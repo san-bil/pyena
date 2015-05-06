@@ -35,7 +35,7 @@ if(is_remote)
     
     %###
     tmpfile_path_2=get_matlab_func_tempfile('cmd');
-    Templater.fill(path_join(current_dir,'condor_task_desc_template2'),condor_task_desc_dictionary,tmpfile_path_2,newline);
+    Templater.fill(path_join(current_dir,'condor_task_desc_template'),condor_task_desc_dictionary,tmpfile_path_2,newline);
     rsync(tmpfile_path_2, CONDOR_TASK_DESC_PATH, {},submit_host,ssh_key, 'push');
     
     %###
@@ -46,7 +46,7 @@ else
                {'DATA_PATH',data_path;'TASK_DIR',task_dir;},...
                LOCAL_CALLER_SCRIPT_PATH,...
                newline);
-    Templater.fill(path_join(current_dir,'condor_task_desc_template2'),condor_task_desc_dictionary,CONDOR_TASK_DESC_PATH,newline);
+    Templater.fill(path_join(current_dir,'condor_task_desc_template'),condor_task_desc_dictionary,CONDOR_TASK_DESC_PATH,newline);
     rsync(path_join(current_dir,'remote_add_relevant_src_paths.m'), path_join(task_dir,'remote_add_relevant_src_paths.m'));
     chmod(LOCAL_CALLER_SCRIPT_PATH,'755');
 
@@ -55,7 +55,7 @@ end
 
 
 if(~kv_get('fake_submit',options,0))
-    condor_submission_script = path_join(current_dir,'conSub_remote3.sh');
+    condor_submission_script = path_join(current_dir,'conSub.sh');
     ssh_keyfile = kv_get('ssh_keyfile',options,default_ssh_key);
     chmod(condor_submission_script,'755');
     cmd = concat_cell_string_array({condor_submission_script, num2str(is_remote), CONDOR_TASK_DESC_PATH, presubmit_auth_steps, submit_host, ssh_keyfile},' ',1);
