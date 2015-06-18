@@ -4,7 +4,7 @@ mystack = dbstack();
 caller_func = mystack(2).name;
 
 use_loopcache = kv_get('use_loopcache',opts,1);
-loopcache_root_dir = [kv_get('job_root_dir',opts,1) filesep 'loopcache'];
+loopcache_root_dir = path_join(kv_get('job_root_dir',opts,pwd),'loopcache');
 loopcache_frequency = kv_get('loopcache_frequency',opts,1);
 
 if(use_loopcache)
@@ -20,6 +20,11 @@ if(use_loopcache)
   end
 else
     loop_tracker=0;
+    do_loopcacheload=0;
+    loopcache_file='';
+    use_loopcache=0;
+    loopcache_root_dir='';
+    loopcache_frequency=1000000000;
 end
 
 assignin('caller', 'do_loopcacheload', do_loopcacheload);
