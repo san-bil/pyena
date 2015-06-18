@@ -9,6 +9,7 @@ try
     linepart=filterlines{1}(linepart_start:end);
     linepart=strrep(linepart,'cluster ','');
 catch
+    linepart='';
     disp('Job ID not available - submission host returned message:')
     disp(message)
 end
