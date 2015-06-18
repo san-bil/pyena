@@ -1,4 +1,4 @@
-function launch_remote_experiment_via_tmux(remote_host, project_path, func_handle, simple_args)
+function launch_remote_job_via_tmux(remote_host, project_path, func_handle, simple_args)
 
 simple_args_are_simple = cellfun(@(tmp)ischar(tmp) || (isnumeric(tmp) && numel(tmp)==1), simple_args);
 assert(all(simple_args_are_simple));
