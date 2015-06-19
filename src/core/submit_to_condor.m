@@ -6,11 +6,7 @@ if(~exist('data_path','var')),task_dir = dirname(data_path);end
 submit_host = kv_get('submit_host',options,'');
 is_remote=~islocalhost(submit_host);
 
-CONDOR_TASK_DESC_PATH = path_join(task_dir,'condor_task_desc.cmd');
-OUTPUT_FILE = path_join(task_dir,'output.txt');
-ERROR_FILE = path_join(task_dir,'err.txt');
-LOG_FILE = path_join(task_dir,'log.txt');
-LOCAL_CALLER_SCRIPT_PATH = path_join(task_dir,'remote_matlab_launcher.sh');
+set_condor_task_file_paths
 
 current_dir = dirname(mfilename('fullpath'));
 
@@ -52,9 +48,10 @@ else
 
 end
 
+fake_submit = kv_get('fake_submit',options,0);
+use_hyena = kv_haskey('use_hyena',options) && kv_get('use_hyena',options,0);
 
-
-if(~kv_get('fake_submit',options,0))
+if(~fake_submit && ~use_hyena)
     condor_submission_script = path_join(current_dir,'conSub.sh');
     ssh_keyfile = kv_get('ssh_keyfile',options,default_ssh_key);
     chmod(condor_submission_script,'755');
@@ -62,6 +59,10 @@ if(~kv_get('fake_submit',options,0))
     [~, stdout] = system_e(cmd);
     job_id = condor_get_job_submission_id(stdout);
     write_cell_of_strings_to_file(path_join(task_dir,'condor_job_id.txt'),{job_id})
+elseif(~fake_submit && use_hyena)
+    hyena_host= kv_get('hyena_host',options);
+    launch_condor_job_via_hyena(hyena_host, LOCAL_CALLER_SCRIPT_PATH);
+    fprintf('Submitted hyena job in %s to host %s \n', task_dir, hyena_host);
 else
     disp(['Set up job in ' task_dir]);
 end
