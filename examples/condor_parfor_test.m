@@ -2,8 +2,8 @@
 submit_host='sb1006@ray03.doc.ic.ac.uk';
 condor_profile_provider=@get_doc_ic_ac_uk_condor_profile;
 
-submit_host='localhost';
-condor_profile_provider=@get_vanilla_condor_profile;
+% submit_host='localhost';
+% condor_profile_provider=@get_vanilla_condor_profile;
 
 %% ###############
 %% can supply a function handle that returns a host running the condor_schedd daemon 
@@ -14,12 +14,15 @@ condor_profile_provider=@get_vanilla_condor_profile;
 
 % remote_submit_host_getter=@get_good_doc_condor_submitter; 
 %% ###############
-new_session_folder = create_increment_folder('condor_test_','/home/sanjay/bitbucket/sb1006/condor_dev');
-condor_obj = create_condor_session(new_session_folder, {}, kv_create(submit_host,condor_profile_provider));
+new_session_folder = create_increment_folder('condor_test_','/vol/bitbucket/sb1006/condor_dev');
+use_hyena=1;
+hyena_user='sb1006';
+hyena_max_users=0;
+condor_obj = create_condor_session(new_session_folder, {}, kv_create(submit_host,condor_profile_provider,use_hyena,hyena_user,hyena_max_users));
 
 condor_objs_acc = {};
 
-for i = 1:5
+for i = 1:3
    
     job_name = [num2str(i) '_'];
     condor_root_dir = get_condor_job_folder(condor_obj,  job_name); %in case you need to pass the job location to the job code
@@ -28,6 +31,6 @@ for i = 1:5
 end
 
 job_list = get_condor_session_job_list(condor_obj);
-
+matador_res=matador_wait_on_files(condor_obj);
 my_mults = collect_condor_session_results(job_list,'my_mult');
 my_dates = collect_condor_session_results(job_list,'my_date');
