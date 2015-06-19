@@ -9,7 +9,7 @@ matlab_gt_2013=$(python -c "print $matlab_version >= 2013")
 if [ "$matlab_gt_2013"  == "True" ]
 then
 
-    matlab -nodisplay -r "remote_add_relevant_src_paths('$DATA_PATH');run_remote_job('$DATA_PATH');"
+    matlab -nodisplay -r "remote_add_relevant_src_paths('$DATA_PATH');run_remote_job('$DATA_PATH');exit;"
 
 else
 
