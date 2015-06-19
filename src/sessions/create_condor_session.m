@@ -35,6 +35,15 @@ else
     git_clone(get_matador_dep_repos(),volatile_src_task_path);
 end
 
+use_hyena=kv_get('use_hyena',session_options);
+if(use_hyena)
+    hyena_max_users = kv_get('hyena_max_users',session_options,1);
+    hyena_hosts_needed= kv_get('hyena_hosts_needed',session_options,10);
+    hyena_machines = find_free_doc_machines(kv_get('hyena_user',session_options),hyena_max_users,hyena_hosts_needed);
+    hyena_pool = create_hyena_pool(hyena_machines,2);
+    session_options = kv_set('hyena_pool',hyena_pool,session_options);
+end
+
 job_list={};
 session_jobs_tags = {};
 session_object = kv_create(session_options,submit_host,condor_task_root_dir, volatile_src_task_path, job_list, session_jobs_tags);

@@ -1,3 +1,4 @@
+
 function session_object = submit_to_condor_session(session_object,  worker_task, worker_args, job_tags, options)
 
 if(~exist('job_tags','var')),job_tags = {};end
@@ -30,6 +31,17 @@ if(is_remote_submit_host)
 else
     my_mkdir(task_dir);
     save(data_path,'worker_task','worker_args','src_paths','task_dir');
+end
+
+use_hyena=kv_get('use_hyena',session_options);
+if(use_hyena)
+    hyena_pool = kv_get('hyena_pool',session_options);
+    hyena_host = get_next_hyena_host(hyena_pool);
+    hyena_host_jobs = kv_get_recursive({hyena_host,'host_slots_used'},hyena_pool);
+    hyena_pool = kv_set_recurse({hyena_host,'host_slots_used'},hyena_host_jobs+1,hyena_pool);
+    session_options = kv_set('hyena_pool',hyena_pool,session_options);
+    session_object = kv_set('session_options',session_options,session_object);
+    options = kv_set('hyena_host',hyena_host,options);
 end
 
 submit_to_condor(data_path,task_dir,kv_join(options,session_options));
