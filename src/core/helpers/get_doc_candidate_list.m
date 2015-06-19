@@ -1,0 +1,23 @@
+function all_candidates = get_doc_candidate_list()
+
+
+machine_count_map = kv_create_w_names('pixel',1:44,...
+                                      'texel',1:38,...
+                                      'line',1:34,...
+                                      'ray',1:40,...
+                                      'corona',1:41,...
+                                      'line',1:34,...
+                                      'edge',1:28 ...
+                                  );
+
+all_candidates = {};
+keys = kv_getkeys(machine_count_map);
+for i = 1:length(keys)
+    
+    key = keys{i};
+    hostcount = kv_get(key,machine_count_map);
+    
+    tmp_hosts=cellfun_uo0(@(tmp) [key sprintf('%2.2d',tmp) '.doc.ic.ac.uk'], my_mat2cell(hostcount));
+    all_candidates = [all_candidates tmp_hosts];
+
+end
