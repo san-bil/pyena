@@ -9,7 +9,7 @@ loopcache_frequency = kv_get('loopcache_frequency',opts,1);
 
 if(use_loopcache)
   my_mkdir(loopcache_root_dir);
-  loopcache_file = [loopcache_root_dir filesep caller_func '.mat'];
+  loopcache_file = path_join(loopcache_root_dir, [caller_func '.mat']);
   if(exist(loopcache_file,'file'))
     load(loopcache_file, 'loop_tracker');
     do_loopcacheload=1;

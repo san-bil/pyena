@@ -17,7 +17,7 @@ job_root_dir = task_dir;
 
 try
     worker_result = worker_task(worker_args{:});
-    job_completion_file = fopen([task_dir filesep 'job_complete.txt'],'a');
+    job_completion_file = fopen(path_join(task_dir,'job_complete.txt'),'a');
     fclose(job_completion_file);
     myClock = clock;h = myClock(4);m = myClock(5);
     completion_time = strcat(num2str(h),'h',num2str(m),'m');
