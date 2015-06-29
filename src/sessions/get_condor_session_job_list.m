@@ -15,6 +15,11 @@ else
 end
 
 
+condor_task_cache_path = path_join(kv_get('condor_task_root_dir',session_object), 'session.mat');
+if(exist(condor_task_cache_path,'file'))
+    load(condor_task_cache_path,'session_object');
+end
+
 
 total_job_list = kv_get('job_list',session_object);
 session_jobs_tags = kv_get('session_jobs_tags', session_object);

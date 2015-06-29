@@ -14,6 +14,12 @@ if(~exist('holding_time', 'var'))
    holding_time = 5; 
 end
 
+condor_task_cache_path = path_join(kv_get('condor_task_root_dir',condor_obj), 'session.mat');
+if(exist(condor_task_cache_path,'file'))
+    load(condor_task_cache_path,'session_object');
+    condor_obj = session_object;
+end
+
 job_done_files_list = get_condor_session_job_list(condor_obj);
 err_files_list = cellfun_uo0(@(tmp)strrep(tmp,'job_complete.txt','err.txt'), job_done_files_list);
 
@@ -38,6 +44,7 @@ while(1)
     
     print_matador_session_err_files(err_files_list(new_errs));
     errs_acc = errs;
+    done_files_acc = do_all_job_done_files_exist;
     
     if(all(errs));out=-1;return;end
     

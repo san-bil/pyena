@@ -1,9 +1,14 @@
 
-function session_object = submit_to_condor_session(session_object,  worker_task, worker_args, job_tags, options)
+function [session_object,task_dir] = submit_to_condor_session(session_object,  worker_task, worker_args, job_tags, options)
 
 if(~exist('job_tags','var')),job_tags = {};end
 if(~exist('options','var')),options = {};end
 
+condor_task_cache_path = path_join(kv_get('condor_task_root_dir',session_object), 'session.mat');
+if(exist(condor_task_cache_path,'file'))
+    load(condor_task_cache_path,'session_object');
+end
+    
 
 condor_task_root_dir = kv_get('condor_task_root_dir',session_object);
 volatile_src_task_path = kv_get('volatile_src_task_path', session_object);
@@ -30,10 +35,10 @@ if(is_remote_submit_host)
     save_and_rsync(submit_host,data_path,kv_create(worker_task,worker_args,src_paths,task_dir),ssh_key);
 else
     my_mkdir(task_dir);
-    save(data_path,'worker_task','worker_args','src_paths','task_dir');
+    save(data_path,'worker_task','worker_args','src_paths','task_dir','-v7.3');
 end
 
-use_hyena=kv_get('use_hyena',session_options);
+use_hyena=kv_get('use_hyena',session_options,0);
 if(use_hyena)
     hyena_pool = kv_get('hyena_pool',session_options);
     hyena_host = get_next_hyena_host(hyena_pool);
@@ -50,3 +55,5 @@ job_done_file = path_join(task_dir,'job_complete.txt');
 
 session_object = kv_append_val('job_list', job_done_file, session_object);
 session_object = kv_set_recurse({'session_jobs_tags',job_done_file},job_tags,session_object);
+
+save(condor_task_cache_path,'session_object');
