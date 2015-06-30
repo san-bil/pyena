@@ -40,7 +40,8 @@ if(use_hyena)
     hyena_max_users = kv_get('hyena_max_users',session_options,1);
     hyena_hosts_needed= kv_get('hyena_hosts_needed',session_options,10);
     hyena_worker_per_node_limit=kv_get('hyena_worker_per_node_limit',session_options,2);
-    hyena_machines = find_free_doc_machines(kv_get('hyena_user',session_options),hyena_max_users,hyena_worker_per_node_limit,hyena_hosts_needed);
+    hyena_candidate_list_provider=kv_get('hyena_candidate_list_provider',session_options);
+    hyena_machines = find_free_hyena_machines(kv_get('hyena_user',session_options),hyena_candidate_list_provider, hyena_max_users,hyena_worker_per_node_limit,hyena_hosts_needed);
     jobs_per_hyena_node=2;
     hyena_pool = create_hyena_pool(hyena_machines,jobs_per_hyena_node);
     session_options = kv_set('hyena_pool',hyena_pool,session_options);

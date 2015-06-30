@@ -1,11 +1,11 @@
-function [best_machines,num_user_list] = find_free_doc_machines(username,user_limit, hyena_worker_per_node_limit, num_machines_ceiling)
+function [best_machines,num_user_list] = find_free_hyena_machines(username,candidate_list_provider, user_limit, hyena_worker_per_node_limit, num_machines_ceiling)
 
 if(~exist('user_limit','var'));user_limit=1;end;
 if(~exist('num_machines_ceiling','var'));num_machines_ceiling=1;end;
 if(~exist('hyena_worker_per_node_limit','var'));hyena_worker_per_node_limit=2;end;
 
 
-all_candidates = get_doc_candidate_list()';
+all_candidates = force_skinny_matrix(candidate_list_provider());
 
 best_machines = {};
 num_user_list = [];
