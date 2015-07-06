@@ -61,7 +61,7 @@ if(~fake_submit && ~use_hyena)
     write_cell_of_strings_to_file(path_join(task_dir,'condor_job_id.txt'),{job_id})
 elseif(~fake_submit && use_hyena)
     hyena_host= kv_get('hyena_host',options);
-    launch_condor_job_via_hyena(hyena_host, LOCAL_CALLER_SCRIPT_PATH);
+    launch_condor_job_via_hyena(hyena_host, LOCAL_CALLER_SCRIPT_PATH, kv_get('session_uname',options,'_'));
     fprintf('Submitted hyena job in %s to host %s \n', task_dir, hyena_host);
 else
     disp(['Set up job in ' task_dir]);

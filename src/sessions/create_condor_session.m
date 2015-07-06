@@ -47,6 +47,9 @@ if(use_hyena)
     session_options = kv_set('hyena_pool',hyena_pool,session_options);
 end
 
+session_uname = get_random_uname();
+write_cell_of_strings_to_file(path_join(condor_task_root_dir,'session_uname.txt'),{session_uname})
+session_options=kv_set('session_uname',session_uname,session_options);
 job_list={};
 session_jobs_tags = {};
-session_object = kv_create(session_options,submit_host,condor_task_root_dir, volatile_src_task_path, job_list, session_jobs_tags);
+session_object = kv_create(session_options,submit_host,condor_task_root_dir, volatile_src_task_path, job_list, session_jobs_tags, session_uname);

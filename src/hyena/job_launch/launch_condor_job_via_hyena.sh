@@ -1,9 +1,11 @@
 #!/bin/bash
 
-# $1=hostname
-# $2=remote script to run
-ssh_keyfile=$3
+remote_hostname=$1
+remote_script_to_run=$2
+job_uname=$3
+ssh_keyfile=$4
 
-date_string=$(python -c "import time; print (time.strftime(\"%H_%M_%S_\"))+(time.strftime(\"%d-%m-%Y\"))")
+date_string=$job_uname_$(python -c "import time; print (time.strftime(\"%H_%M_%S_\"))+(time.strftime(\"%d-%m-%Y\"))")
+session_name=$job_uname_$date_string
 
-ssh -i $ssh_keyfile -t $1 "tmux new-session -s $USER_session_$date_string -d '$2 1>$(dirname $2)/output.txt 2>$(dirname $2)/err.txt ;exit;'"
+ssh -i $ssh_keyfile -t $remote_hostname "tmux new-session -s $session_name -d '$remote_script_to_run 1>$(dirname $remote_script_to_run)/output.txt 2>$(dirname $remote_script_to_run)/err.txt ;exit;'"
