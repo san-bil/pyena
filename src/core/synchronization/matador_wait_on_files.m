@@ -46,7 +46,7 @@ while(1)
     errs_acc = errs;
     done_files_acc = do_all_job_done_files_exist;
     
-    if(all(errs));out=-1;return;end
+    if(all(errs));error('All matador jobs have failed.');out=-1;return;end
     
     pause(holding_time);
     
