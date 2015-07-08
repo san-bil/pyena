@@ -36,7 +36,7 @@ for i = 1:length(job_list)
     
     if(is_job_complete==1)
         task_dir = get_parent_dir(indicator_file);
-        task_mat = [task_dir filesep 'task_data.mat'];
+        task_mat = path_join(task_dir,'task_data.mat');
         load(task_mat,'worker_result');
         return_val = kv_get(return_val_name,worker_result);
         acc{i} = return_val;
