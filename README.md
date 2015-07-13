@@ -27,14 +27,14 @@ At the moment it is only supported on Linux and Mac, due to a lot of underlying 
 
 Using this project requires cloning the dependencies listed in matlab_requirements.txt. Then add this folder and the dependency folders to your MATLAB path.
 
-## Usage
+### Usage
 
 ##### kv_maps/dictionaries 
 In the guide below, a "map" refers to a key-value map (like a python dictionary). Since these do not exist in the MATLAB universe, we wrote a bundle of utility functions to emulate them, in sbmat_core/key_val/. A map is just a Nx2 cellarray, where the first column contains the keys, and the second column contains the corresponding values e.g.:
-```
-	opts_map = {
+```matlab
+	options = {
     				'condor_rsync_args','--exclude="*.mat"';
-    				'ssh_key','/home/$USER/.ssh/id_rsa'
+    				'ssh_key','/home/$USER/.ssh/id_rsa';
                 }
 ```
 
@@ -74,7 +74,7 @@ HTCondor is often deployed in "cycle-scavenging" mode, such that the unused CPU 
 Hence, a way to cache intermediate results of long-running jobs is essential. Loops can be a bit tricky to cache correctly, so there are some functions in src/loop_caching to help.
 
 These are:
-*	`setup_loop_cache(opts_map)`
+*	`setup_loop_cache(options)`
 *	`check_loop_cache()`
 *	`write_loop_cache()`
 
