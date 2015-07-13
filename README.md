@@ -1,13 +1,13 @@
 # matador
-matador is a package to manage job distribution from Matlab. It distributes jobs to nodes using either HTCondor or its own proprietary system Hyena, which uses ssh+tmux to directly run a job.
+matador is a package to manage job distribution from Matlab. It distributes jobs to nodes using either HTCondor or its own proprietary system Hyena.
 
-matador provides functionality to create an object called a "session", against which a user can submit jobs by merely passing a "worker task" (i.e. a callback) and the associated arguments for that task. The session object does all the book-keeping as to what jobs have been submitted, where they are being run, whether results are available, whether a job has failed, etc.
+matador provides functionality to create an object called a "session", against which a user can submit jobs by passing a `worker_task`  function-handle (i.e. a callback) and the associated arguments for that task. The session object does all the book-keeping as to what jobs have been submitted, where they are being run, whether results are available, whether a job has failed, etc.
 
 matador is under active development and hence may be unstable. However, we make as much effort as possible to write our code in a manner that is backwards compatible.
 
 ##### Hyena
 
-Hyena has the functionality to start jobs directly on a node (bypassing the need for a centralized cluster manager such as Condor), however this presents both advantages and disadvantages. The advantages are:
+Hyena has the functionality to start jobs directly on a node (bypassing the need for a centralized cluster manager such as Condor). This is done using ssh+tmux. however this presents both advantages and disadvantages. The advantages are:
 * your jobs will run immediately
 * your jobs cannot be pre-empted (i.e. kicked) by the cluster management system
 
@@ -57,13 +57,20 @@ The main functions for usage are:
 * `submit_to_hyena_session(session_object,  worker_task, worker_args, job_tags, options)`
 * `submit_to_hyena_session_synchronous(session_object,  worker_task, worker_args, job_tags, options)`
 
-In both cases, the `session_root_dir` is a single folder in which the state of the session will be kept, as well as all the necessary files for all the jobs to run. `volatile_src_paths` is a cell-array of folder paths in which **all the necessary source for a job can be found**.
+In both cases:
+*	`session_root_dir` is the path to a single folder in which the entire state of the matador session will be kept, as well as all the necessary files for all the jobs to run.
+*	`volatile_src_paths` is a cell-array of folder paths in which **all the necessary source for a job can be found**.
 
-When submitting a job to a session, the user passes (along with the session object) the main worker function as a callback (`worker_task`), and all of its arguments in a cell-array (`worker_args`). They also have the option to add some string tags to the specific job (such as "validation" or "imagenet" or whatever). There are also more options that can be passed for that specific job submission, however see the corresponding function source for more details on valid options.
+When submitting a job to a session, the user passes (along with the session object):
+*	the main worker function as a callback (`worker_task`)
+*	 all of its arguments in a cell-array (`worker_args`)
+*	 (optional) string tags for the specific job (such as "validation" or "imagenet" or whatever)
+*	 an options map. Refer to the corresponding function for more details on what options are available.
 
-The `submit_to_*` functions submit a job to either Condor or Hyena asynchronously, so you can loop over e.g.  a large hyperparameter space and run all your jobs in parallel. You can synchronize on the completion of all your jobs using `matador_wait_on_files(session_object)`. This also conveniently monitors the standard error of all your jobs.
+###### Synchronous vs Asynchronous job submission
+The `submit_to_*` functions submit a job to Condor/Hyena asynchronously, so you can loop over e.g.  a large hyperparameter space and run all your jobs in parallel. You can synchronize on the completion of all your jobs using `matador_wait_on_files(session_object)`. This also conveniently monitors the standard error of all your jobs.
 
-The `submit_to_*_synchronous` functions do what it sounds like - whilst the `worker_task()` is run remotely, the local machine waits for the job to finish. It also only returns a single numeric value - this is primarily useful with hyperparameter optimizers like [BayesOpt](https://github.com/rmcantin/bayesopt) that require nothing but a blackbox callback that takes a numeric vector and returns a function value.
+The `submit_to_*_synchronous` functions submit jobs to Condor/Hyena synchronously - whilst the `worker_task` callback is run remotely, the local machine waits for it to finish. The `submit_to_*_synchronous` functions only return a single numeric value, as they are primarily for use with hyperparameter optimizers like [BayesOpt](https://github.com/rmcantin/bayesopt). Such global optimizers for black-box functions often require a blackbox callback that takes solely a numeric vector and returns an objective function value.
 
 ##### Valid worker functions
 There is only one requirement that your worker_task callback must fulfill in order to run properly. The desired result variables **MUST** must be wrapped in a dictionary (i.e. `kv_create(result_1,result_2)`), and this dictionary must be the sole return value of the `worker_task` callback. 
@@ -90,3 +97,18 @@ Results from all jobs can be collected using a variety of functions:
 	* takes a session_object and the name of the desired result variable from the worker function. So if the final map returned by the worker_task is `worker_task_results_map=kv_create(prediction_error,optimization_steps)`, then one can retrieve the prediction error from *all* tasks using `collect_condor_session_results2(session_object,'prediction_error')`.
 * 	`collect_condor_worker_result()`
 	* takes a (sub)list of jobs from a session object, obtainable using `get_matador_session_job_list()`, and returns the entire results-structure from each job.
+
+
+####Future features
+###### Cross-domain node pools
+We are currently working on extending support to more advanced use-cases like cross-domain pools of compute nodes.  This would entail the ability to tie together a pool of compute nodes such as:
+* your spare laptop sitting at home
+* your departmental cluster
+* some Amazon EC2 instances
+* your parents Pentium 3 in the attic
+
+and submit jobs to all of them (provided they have Matlab installed with valid licenses, of course).
+
+###### Octave/Julia support
+We're not sure how easy this would be to do, as we only have tangential experience with Octave, and next-to-none with Julia. The main difficulty would be porting sbmat_core, especially the reflection/ utility functions. We'll see.
+
