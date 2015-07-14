@@ -1,4 +1,4 @@
-function [best_machines,num_user_list] = find_free_hyena_machines(username,candidate_list_provider, user_limit, hyena_worker_per_node_limit, num_machines_ceiling)
+function [best_machines,num_user_list] = find_free_hyena_machines(candidate_list_provider, user_limit, hyena_worker_per_node_limit, num_machines_ceiling)
 
 if(~exist('user_limit','var'));user_limit=1;end;
 if(~exist('num_machines_ceiling','var'));num_machines_ceiling=1;end;
@@ -11,7 +11,7 @@ best_machines = {};
 num_user_list = [];
 for i =1:length(all_candidates)
     raw_host = all_candidates{i};
-    candidate_host = [username '@' raw_host];
+    candidate_host = raw_host;
     [logged_in_users, is_host_up] = get_unix_host_logged_in_users(candidate_host);
     [tmux_sessions, is_host_up] = get_unix_host_tmux_sessions(candidate_host);
     num_users = length(logged_in_users);

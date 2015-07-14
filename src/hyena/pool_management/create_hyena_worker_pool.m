@@ -1,4 +1,4 @@
-function pool = create_hyena_pool(hyena_machines,jobs_per_host)
+function pool = create_hyena_worker_pool(hyena_machines,jobs_per_host)
 
 % host_slots_used host_slots_total
 
