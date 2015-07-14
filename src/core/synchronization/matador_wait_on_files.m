@@ -1,4 +1,4 @@
-function out = matador_wait_on_files(condor_obj,holding_time)
+function out = matador_wait_on_files(condor_obj,holding_time,ssh_key)
 
 % in: a list of file paths
 %     a waiting period between file-existence checks
@@ -10,9 +10,10 @@ function out = matador_wait_on_files(condor_obj,holding_time)
 %       and sychronizing by waiting for the results, instead of waiting for each job synchronously.
 %
 % tags: #synchronization #jobs #condor #shell
-if(~exist('holding_time', 'var'))
-   holding_time = 5; 
-end
+if(~exist('holding_time', 'var'));holding_time = 5;end
+
+if(~exist('ssh_key','var')),ssh_key=default_ssh_key;end;
+
 
 condor_task_cache_path = path_join(kv_get('condor_task_root_dir',condor_obj), 'session.mat');
 if(exist(condor_task_cache_path,'file'))
@@ -21,6 +22,8 @@ if(exist(condor_task_cache_path,'file'))
 end
 
 job_done_files_list = get_condor_session_job_list(condor_obj);
+
+job_to_hosts_map = kv_get('job_to_host_map', condor_obj);
 err_files_list = cellfun_uo0(@(tmp)strrep(tmp,'job_complete.txt','err.txt'), job_done_files_list);
 
 fprintf('%s waiting on: \n',callerfunc());
@@ -32,7 +35,7 @@ done_files_acc = (zeros(size(job_done_files_list)));
 while(1)
     
     
-    do_all_job_done_files_exist = logical(my_cell2mat(cellfun_uo0(@(tmp)exist(tmp,'file'),job_done_files_list)));
+    do_all_job_done_files_exist = logical(my_cell2mat(cellfun_uo0(@(tmp)remote_file_exists(tmp,kv_get(tmp,job_to_hosts_map),ssh_key),job_done_files_list)));
     new_done_files_ind = xor(done_files_acc, do_all_job_done_files_exist);
     new_done_files = job_done_files_list(new_done_files_ind);
     cellfun_uo0(@(tmp)disp_out([ dirname(tmp) ' - job is complete.' ]),new_done_files);
