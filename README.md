@@ -27,7 +27,7 @@ At the moment Matador is only supported on Linux and Mac, due to a lot of underl
 
 Using this project requires cloning the dependencies listed in matlab_requirements.txt. Then add this folder and the dependency folders to your MATLAB path.
 
-### Other pre-requisites
+##### Other pre-requisites
 
 Unless the machine you are working on is part of an existing Condor cluster, where all nodes are using a networked file system, ssh (and rsync via ssh) is going to be used at some point in the session creation/job submission process. You don't want to be tapping in the password for each connection to each node, so you'll need to set up key-based authentication for nodes which you'll submit jobs to/run jobs on.
 
