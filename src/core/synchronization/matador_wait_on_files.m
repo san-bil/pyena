@@ -11,7 +11,6 @@ function out = matador_wait_on_files(condor_obj,holding_time,ssh_key)
 %
 % tags: #synchronization #jobs #condor #shell
 if(~exist('holding_time', 'var'));holding_time = 5;end
-
 if(~exist('ssh_key','var')),ssh_key=default_ssh_key;end;
 
 

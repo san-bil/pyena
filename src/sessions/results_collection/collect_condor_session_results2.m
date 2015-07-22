@@ -10,8 +10,8 @@ end
 
 condor_task_root_dir = kv_get('condor_task_root_dir', session_object);
 job_list = get_condor_session_job_list(session_object);
-job_to_hosts_map = kv_get('job_to_hosts_map', session_object);
-matador_pickup_remote_results = kv_get_recursive({'session_options','matador_pickup_remote_results'},session_object,0);
+job_to_hosts_map = kv_get('job_to_host_map', session_object);
+matador_pickup_remote_results = kv_get_recursive({'session_options','matador_pickup_remote_results'},session_object);
 
 retval_acc = cell(length(job_list),1);
 
