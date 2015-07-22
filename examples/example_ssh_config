@@ -1,0 +1,40 @@
+#---------------------------------------------------------------------------------------------------
+# specify the gateway server from which my personal worker nodes can be reached
+Host personal_gateway
+    Hostname mygateway.mywebsite.com
+    User sanjay
+
+# use the ProxyCommand directive to specify that any connection to the worker node "dopey"
+# should be run through a personal gateway server that has a public IP (or at least port-forwarding)
+Host dopey
+    User sanjay
+    ProxyCommand ssh personal_gateway nc %h %p
+
+#----------------------------------------------------------------------------------------------------
+
+# since Amazon (other any other cloud provider) instances have public IP addresses, we don't
+# need to set any gateway server. Yay!
+Host tarzan
+    Hostname 129.121.999.287
+    User sanjay
+    
+
+#----------------------------------------------------------------------------------------------------
+
+# set the hostname for all nodes with a Viridian domain
+Host *.viridian.com
+    User s.bilakhia
+
+
+
+# specify the gateway server from which the organizational worker nodes can be reached
+Host viridian_gateway
+    Hostname gateway.viridian.com
+
+
+
+# use the ProxyCommand directive to specify that any connection to the worker nodes 
+# (blastoise/pikachu/psyduck) should be run through the organizational gateway server specified above
+
+Host blastoise.viridian.com pikachu.viridian.com psyduck.viridian.com
+    ProxyCommand ssh viridian_gateway nc %h %p

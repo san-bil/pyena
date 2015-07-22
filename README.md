@@ -20,16 +20,22 @@ So you are advised to use it sparingly. HTCondor is a great system, but sometime
 
 ### Platforms
 
-At the moment it is only supported on Linux and Mac, due to a lot of underlying calls to Unix command-line utilities like `find`. It might be possible to port to Windows by using UnxUtils/GnuWin32/Cygwin, but there are no immediate plans to do that.
+At the moment Matador is only supported on Linux and Mac, due to a lot of underlying calls to Unix command-line utilities like `find`. It might be possible to port to Windows by using UnxUtils/GnuWin32/Cygwin, but there are no immediate plans to do that, as we prefer our souls in their current uncrushed state.
 
 
 ### Install
 
 Using this project requires cloning the dependencies listed in matlab_requirements.txt. Then add this folder and the dependency folders to your MATLAB path.
 
+### Other pre-requisites
+
+Unless the machine you are working on is part of an existing Condor cluster, where all nodes are using a networked file system, ssh (and rsync via ssh) is going to be used at some point in the session creation/job submission process. You don't want to be tapping in the password for each connection to each node, so you'll need to set up key-based authentication for nodes which you'll submit jobs to/run jobs on.
+
+Please see http://www.thegeekstuff.com/2008/11/3-steps-to-perform-ssh-login-without-password-using-ssh-keygen-ssh-copy-id for more details, or just search for "set up key authentication ssh-keygen ssh-copy-id".
+
 ### Usage
 
-##### kv_maps/dictionaries 
+##### kv_maps/dictionaries
 In the guide below, a "map" refers to a key-value map (like a python dictionary). Since these do not exist in the MATLAB universe, we wrote a bundle of utility functions to emulate them, in sbmat_core/key_val/. A map is just a Nx2 cellarray, where the first column contains the keys, and the second column contains the corresponding values e.g.:
 ```matlab
 	options = {
@@ -67,10 +73,30 @@ When submitting a job to a session, the user passes (along with the session obje
 *	 (optional) string tags for the specific job (such as "validation" or "imagenet" or whatever)
 *	 an options map. Refer to the corresponding function for more details on what options are available.
 
+
 ###### Synchronous vs Asynchronous job submission
 The `submit_to_*` functions submit a job to Condor/Hyena asynchronously, so you can loop over e.g.  a large hyperparameter space and run all your jobs in parallel. You can synchronize on the completion of all your jobs using `matador_wait_on_files(session_object)`. This also conveniently monitors the standard error of all your jobs.
 
 The `submit_to_*_synchronous` functions submit jobs to Condor/Hyena synchronously - whilst the `worker_task` callback is run remotely, the local machine waits for it to finish. The `submit_to_*_synchronous` functions only return a single numeric value, as they are primarily for use with hyperparameter optimizers like [BayesOpt](https://github.com/rmcantin/bayesopt). Such global optimizers for black-box functions often require a blackbox callback that takes solely a numeric vector and returns an objective function value.
+
+##### Cross-domain node pools (currently Hyena-backed only)
+Hyena-backed sessions now include the ability to tie together compute nodes of different domains into one pool, and to submit jobs to this pool (provided each node has Matlab installed with valid licenses, of course). The only extra job for the user in this case is to set an option `source_hosts`, and create a valid ssh config file.
+
+For example, let's say I have:
+* a personal laptop called "dopey" (with its own filesystem)
+* an Amazon EC2 instance "tarzan" (with its own filesystem)
+* and 3 spare boxes in an imaginary domain called Viridian - "blastoise.viridian.com", "pikachu.viridian.com" and "psyduck.viridian.com". These all use networked storage volumes (instead of local storage), so a file at blastoise.viridian.com:/vol/bitbucket/foo.sh is exactly the same file as pikachu.viridian.com:/vol/bitbucket/foo.sh.
+
+In this case, we set `source_hosts={'sanjay@dopey','sanjay@tarzan','s.bilakhia@psyduck.viridian.com'}`. Hence the source code necessary to run a job is available on all domains to be used. We don't need to transfer to each box in the Viridian domain, because they all shared the same networked file system.
+
+######Using nodes that do not have publicly accessible IPs
+It may be the case that a node such as "dopey" is sitting behind residential internet using NAT (network address translation), or that the boxes {blastoise, pikachu, psyduck}.viridian.com are only accessible when connected to the organisational network. In such a case, as Hyena uses ssh+tmux to do all the dirty work, we need to have an appropriate ssh_config file that specifies how to access these nodes via public facing gateway servers.
+
+For example, Viridian may have a server gateway.viridian.com, from which all other machines in the *.viridian.com domain can be accessed.
+
+Meanwhile, a residential network may have only one publicly facing machine at mygateway.mywebsite.com, from which all other machines on the network can be accessed.
+
+An example of such a config file can be seen in examples/example_ssh_config.
 
 ##### Valid worker functions
 There is only one requirement that your worker_task callback must fulfill in order to run properly. The desired result variables **MUST** must be wrapped in a dictionary (i.e. `kv_create(result_1,result_2)`), and this dictionary must be the sole return value of the `worker_task` callback. 
@@ -99,16 +125,9 @@ Results from all jobs can be collected using a variety of functions:
 	* takes a (sub)list of jobs from a session object, obtainable using `get_matador_session_job_list()`, and returns the entire results-structure from each job.
 
 
-####Future features
-###### Cross-domain node pools
-We are currently working on extending support to more advanced use-cases like cross-domain pools of compute nodes.  This would entail the ability to tie together a pool of compute nodes such as:
-* your spare laptop sitting at home
-* your departmental cluster
-* some Amazon EC2 instances
-* your parents Pentium 3 in the attic
 
-and submit jobs to all of them (provided they have Matlab installed with valid licenses, of course).
+####Future features
 
 ###### Octave/Julia support
-We're not sure how easy this would be to do, as we only have tangential experience with Octave, and next-to-none with Julia. The main difficulty would be porting sbmat_core, especially the reflection/ utility functions. We'll see.
+We're not sure how easy this would be to do, as we only have tangential experience with Octave, and next-to-none with Julia. The main difficulty would be porting sbmat_core, especially the functions making extensive use of reflection. We'll see.
 
