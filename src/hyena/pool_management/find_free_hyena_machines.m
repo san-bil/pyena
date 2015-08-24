@@ -19,7 +19,7 @@ for i =1:length(all_candidates)
     if(is_host_up && num_users<=user_limit && num_tmux_sessions<hyena_worker_per_node_limit)
         best_machines{end+1} = candidate_host;
         num_user_list = [num_user_list num_users];
-        fprintf('%s : %d users\n',raw_host,num_users);
+        fprintf('%s : %d users, %d hyena sessions\n',raw_host,num_users, num_tmux_sessions);
         if(length(best_machines)>=num_machines_ceiling)
             best_machines=best_machines';
             num_user_list=num_user_list';
