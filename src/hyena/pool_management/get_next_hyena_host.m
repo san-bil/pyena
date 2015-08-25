@@ -11,7 +11,6 @@ while(1)
     end
     print_log_message(1,2,'\nget_next_hyena_host(): waiting for a hyena node to free up. All currently in use.\n\n')
     pause_with_countdown(10);
-    print_log_message(1,2,'\nChecking for free hyena host...\n\n')
 end
 
 mindex = argmin(ratios);

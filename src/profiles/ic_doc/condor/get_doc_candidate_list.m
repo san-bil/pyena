@@ -22,6 +22,6 @@ for i = 1:length(keys)
     host_idxs = kv_get(key,machine_count_map);
     
     tmp_hosts=cellfun_uo0(@(tmp) [username '@' key sprintf('%2.2d',tmp) '.doc.ic.ac.uk'], my_mat2cell(host_idxs));
-    all_candidates = [all_candidates tmp_hosts];
+    all_candidates = [all_candidates; tmp_hosts];
 
 end
