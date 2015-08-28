@@ -30,15 +30,23 @@ for i = 1:length(job_list)
     else
         task_dir = dirname(indicator_file);
         
-        if(~islocalhost(job_host) && matador_pickup_remote_results)
+        fetch_criteria_1 = ~islocalhost(job_host) && matador_pickup_remote_results;
+        fetch_criteria_2 = islocalhost(job_host);
+        if(fetch_criteria_1)
            rsync(task_dir, condor_task_root_dir, rsync_args,job_host,default_ssh_key,'pull')
            task_mat = path_join(condor_task_root_dir, basename(task_dir),'task_data.mat');
-        else
+        elseif(fetch_criteria_2)
            task_mat = path_join(task_dir,'task_data.mat');
         end
         
-        load(task_mat,'worker_result');
-        return_val = kv_get(return_val_name,worker_result);
+        if(fetch_criteria_1 || fetch_criteria_2)
+            load(task_mat,'worker_result');
+            return_val = kv_get(return_val_name,worker_result);
+        else
+            return_val = 'Results not fetched.';
+        end
+        %% 
+        
         retval_acc{i} = return_val;
     end
     
