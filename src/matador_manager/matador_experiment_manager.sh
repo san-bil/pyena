@@ -115,6 +115,8 @@ elif [[ "$directive" == "launch_unstarted" ]]; then
 	matador_launch_unstarted_jobs $root_dir $3
 elif [[ "$directive" == "get_cmd" ]]; then
 	matador_get_worker_cmd $root_dir
+elif [[ "$directive" == "cancel_job" ]]; then
+    touch cancel_job.txt
 elif [[ "$directive" == "find_unfinished_exps" ]]; then
 	matador_exps_with_unfinished_jobs $root_dir $3
 else
@@ -128,4 +130,7 @@ else
 			 \n\t find_condor_job_ids   \t Find the IDs of all Condor jobs running in folders under this directory \
 			 \n\t help   \t\t\t Display this help"
 fi
+
+
+
 
