@@ -37,6 +37,7 @@ end
 volatile_src_task_path = path_join(condor_task_root_dir,'volatile');
 volatile_src_paths = my_unique([force_fat_matrix(volatile_src_paths) get_matador_dir()]);
 rsync_args = kv_get('matador_rsync_args',session_options,{'--exclude="*.mat"'});
+fprintf('Copying source to remote filesystem...');
 for i = 1:length(all_source_hosts)
     source_host = all_source_hosts{i};
     is_remote_submit_host = ~islocalhost(source_host);
