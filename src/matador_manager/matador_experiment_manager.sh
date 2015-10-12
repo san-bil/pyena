@@ -74,7 +74,7 @@ function matador_launch_unstarted_jobs(){
 function matador_get_worker_cmd(){
 	#!/bin/bash
 	echo ""
-	cat $1/remote_matlab_launcher.sh | grep -oP "run_remote_job\([^\(]*\)"
+	cat $1/remote_matlab_launcher.sh | ack -o "run_remote_job\([^\(]*\)"
 	echo ""
 }
 
