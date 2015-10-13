@@ -16,5 +16,6 @@ if(is_host_up)
     
 else
     fprintf('%s is unresponsive. \n', host_url)
+    out={};
     num_users = Inf;
 end

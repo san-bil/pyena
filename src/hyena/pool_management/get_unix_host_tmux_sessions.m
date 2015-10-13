@@ -17,5 +17,6 @@ if(is_host_up)
     num_sessions = length(out);    
 else
     fprintf('%s is unresponsive. \n', host_url)
+    out={};
     num_sessions = Inf;
 end
