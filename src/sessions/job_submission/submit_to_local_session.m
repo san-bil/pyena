@@ -15,6 +15,7 @@ condor_task_root_dir = kv_get('condor_task_root_dir',session_object);
 task_dir = path_join(condor_task_root_dir,kv_get('job_name',options,['local_' datestr(now,'dd-mm-yyyy-HH_MM_SS_FFF')])); 
 global job_root_dir
 job_root_dir = task_dir;
+my_mkdir(job_root_dir);
 
 worker_result=worker_task(worker_args{:});
 
