@@ -11,7 +11,13 @@ if(is_host_up)
     out = filter_string_list(stdout_lines,'ENDSSH',1);
     out = filter_string_list(out,'failed to connect to server',1);
     out = filter_string_list(out,'Warning: Permanently added',1);
+    out = filter_string_list(out,'RESOURCE-INTENSIVE',1);
+    out = filter_string_list(out,'known hosts',1);
+    out = filter_string_list(out,'WARNING : Unauthorized access',1);
+    out = filter_string_list(out,'prosecuted by law. By accessing',1);
+    out = filter_string_list(out,'may be monitored',1);
 
+    
     out = filter_string_list(out,'windows (created',0);
 
     num_sessions = length(out);    
