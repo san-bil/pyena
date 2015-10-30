@@ -81,7 +81,7 @@ function matador_get_worker_cmd(){
 function check_time_since_experiment_update(){
     exp_folder="$1"
     update_indicator_file_regex="$2"
-    for f in $(find $exp_folder -maxdepth 3 -name "$update_indicator_file_regex"); do echo "$(echo -n "$f: "; echo -n $(expr $(date +%s) - $(date +%s -r "$f") ); echo -n " ; " ; echo $(cat $f|wc -l) lines )";done;
+    for f in $(find $exp_folder -maxdepth 3 -name "$update_indicator_file_regex"); do echo "$(echo -n "$f: "; echo -n $(expr $(date +%s) - $(date +%s -r "$f") secs ); echo -n " ; " ; echo $(cat $f|wc -l) lines )";done;
 }
 
 function matador_exps_with_unfinished_jobs(){
