@@ -81,7 +81,7 @@ function matador_get_worker_cmd(){
 function check_time_since_experiment_update(){
     exp_folder="$1"
     update_indicator_file_name="$2"
-    for f in `ls exp_folder |grep -v session |grep -v volatile`; do echo $(echo -n "$f: ";cat $f/$update_indicator_file_name|wc -l; echo " ; " ;expr $(date +%s) - $(date +%s -r $f/$update_indicator_file_name.csv) );done;
+    for f in `ls $exp_folder |grep -v session |grep -v volatile`; do echo "$(echo -n "$f: ";cat $f/$update_indicator_file_name|wc -l; echo " ; " ;expr $(date +%s) - $(date +%s -r $f/$update_indicator_file_name.csv) )s";done;
 }
 
 function matador_exps_with_unfinished_jobs(){
