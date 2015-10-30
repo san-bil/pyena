@@ -17,6 +17,9 @@ if(is_host_up)
     out = filter_string_list(out,'WARNING : Unauthorized access',1);
     out = filter_string_list(out,'prosecuted by law. By accessing',1);
     out = filter_string_list(out,'may be monitored',1);
+    out = filter_string_list(out,'pts',0);
+    out = filter_string_list(out,'tty',0);
+
 
     num_users = length(out);
     
