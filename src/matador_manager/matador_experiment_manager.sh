@@ -78,6 +78,12 @@ function matador_get_worker_cmd(){
 	echo ""
 }
 
+function check_time_since_experiment_update(){
+    exp_folder="$1"
+    update_indicator_file_name="$2"
+    for f in `ls exp_folder |grep -v session |grep -v volatile`; do echo $(echo -n "$f: ";cat $f/$update_indicator_file_name|wc -l; echo " ; " ;expr $(date +%s) - $(date +%s -r $f/$update_indicator_file_name.csv) );done;
+}
+
 function matador_exps_with_unfinished_jobs(){
 
 	search_root_dir=$1
@@ -113,6 +119,8 @@ elif [[ "$directive" == "list_errors" ]]; then
 	matador_list_jobs_w_errors $root_dir
 elif [[ "$directive" == "launch_unstarted" ]]; then
 	matador_launch_unstarted_jobs $root_dir $3
+elif [[ "$directive" == "check_time_since_experiment_update" ]]; then
+    check_time_since_experiment_update $root_dir $3
 elif [[ "$directive" == "get_cmd" ]]; then
 	matador_get_worker_cmd $root_dir
 elif [[ "$directive" == "cancel_job" ]]; then
@@ -120,15 +128,17 @@ elif [[ "$directive" == "cancel_job" ]]; then
 elif [[ "$directive" == "find_unfinished_exps" ]]; then
 	matador_exps_with_unfinished_jobs $root_dir $3
 else
-	echo -n "$(basename $0) usage:"
-	echo -e "\n\t restart_incomplete    \t Restart jobs that are yet to complete \
-			 \n\t list_unfinished    \t\t List unfinished jobs \
-			 \n\t list_errors    \t\t List jobs with errors \
-			 \n\t launch_unstarted    \t\t Launch unstarted jobs \
-			 \n\t get_cmd    \t\t\t Get run_remote_job string for a particular job (for job debugging purposes) \
-			 \n\t find_unfinished_exps   \t Find experiments with jobs still running. \
-			 \n\t find_condor_job_ids   \t Find the IDs of all Condor jobs running in folders under this directory \
-			 \n\t help   \t\t\t Display this help"
+    echo ""
+	echo "$(basename $0) usage:"
+	echo -e "\n\t restart_incomplete    \t\t\t Restart jobs that are yet to complete \
+			 \n\t list_unfinished    \t\t\t List unfinished jobs \
+			 \n\t list_errors    \t\t\t List jobs with errors \
+			 \n\t launch_unstarted    \t\t\t Launch unstarted jobs \
+			 \n\t get_cmd    \t\t\t\t Get run_remote_job string for a particular job (for job debugging purposes) \
+			 \n\t find_unfinished_exps   \t\t Find experiments with jobs still running. \
+			 \n\t check_time_since_experiment_update   \t Find number of lines and last modification time of file that is \n\t\t\t\t\t\t continuously updated by a job (i.e. check job progress and status)  \
+			 \n\t find_condor_job_ids   \t\t\t Find the IDs of all Condor jobs running in folders under this directory \
+			 \n\t help   \t\t\t\t Display this help"
 fi
 
 
