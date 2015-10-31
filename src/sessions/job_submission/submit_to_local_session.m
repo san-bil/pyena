@@ -1,5 +1,9 @@
 
-function [worker_result] = submit_to_local_session(session_object,  worker_task, worker_args,  options)
+function [worker_result] = submit_to_local_session(session_object,  worker_task, worker_args,  options, dummy_arg)
+
+if(exist('dummy_arg','var'))
+    dummy_arg = {}; %this is on purpose. 
+end
 
 if(~exist('options','var')),options = {};end
 
