@@ -1,4 +1,10 @@
-function setup_nested_loop_cache(opts)
+function setup_nested_loop_cache(opts,idx)
+
+if(~exist('idx','var'))
+    idx_str='';
+else
+    idx_str=str(idx);
+end
 
 mystack = dbstack();
 caller_func = mystack(2).name;
@@ -11,7 +17,7 @@ loop_depth = kv_get([caller_func '_loop_depth'],opts,1);
 
 if(use_loopcache)
   my_mkdir(loopcache_root_dir);
-  loopcache_file = path_join(loopcache_root_dir, [caller_func '.mat']);
+  loopcache_file = path_join(loopcache_root_dir, [caller_func idx_str '.mat']);
   if(exist(loopcache_file,'file'))
     load(loopcache_file, 'loop_tracker');
     do_loopcacheload=1;
