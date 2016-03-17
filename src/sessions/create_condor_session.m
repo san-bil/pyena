@@ -24,7 +24,11 @@ if(use_hyena)
     hyena_hosts_needed= kv_get('hyena_hosts_needed',session_options,10);
     jobs_per_hyena_node=kv_get('jobs_per_hyena_node',session_options,2);
     hyena_candidate_list_provider=kv_get('hyena_candidate_list_provider',session_options);
-    hyena_machines = find_free_hyena_machines(hyena_candidate_list_provider, hyena_max_users,jobs_per_hyena_node,hyena_hosts_needed);
+    if(~kv_haskey('hyena_machines',session_options))
+        hyena_machines = find_free_hyena_machines(hyena_candidate_list_provider, hyena_max_users,jobs_per_hyena_node,hyena_hosts_needed);
+    else
+        hyena_machines = kv_get('hyena_machines',session_options);
+    end
     hyena_pool = create_hyena_worker_pool(hyena_machines,jobs_per_hyena_node);
     session_options = kv_set('hyena_pool',hyena_pool,session_options);
     all_source_hosts = source_hosts;
