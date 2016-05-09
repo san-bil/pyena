@@ -9,9 +9,9 @@ else
     matlab_version=$(readlink -f $(which matlab) | grep -oP "R[0-9]+[ab]+" | grep -oP "[0-9]+");
 fi
 
-matlab_gt_2013=$(python -c "print $matlab_version >= 2013")
+matlab_gt_2013=$(python -c "print('$matlab_version >= 2013')")
 
-if [ "$matlab_gt_2013"  == "True" ]
+if [ $matlab_version -gt 2013 ]
 then
 
     matlab -nodisplay -r "remote_add_relevant_src_paths('$DATA_PATH');run_remote_job('$DATA_PATH');exit;"
