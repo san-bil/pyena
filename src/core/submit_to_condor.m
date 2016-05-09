@@ -68,8 +68,10 @@ if(~fake_submit && ~use_hyena)
     job_id = condor_get_job_submission_id(stdout);
     write_cell_of_strings_to_file(path_join(task_dir,'condor_job_id.txt'),{job_id});
 elseif(~fake_submit && use_hyena)
+    hyena_remote_setup_cmds=kvg('hyena_remote_setup_cmds',options,'');
+    ssh_keyfile = kv_get('ssh_keyfile',options,default_ssh_key);
     hyena_host= kv_get('hyena_host',options);
-    launch_condor_job_via_hyena(hyena_host, LOCAL_CALLER_SCRIPT_PATH, kv_get('session_uname',options,'_'));
+    launch_condor_job_via_hyena(hyena_host, LOCAL_CALLER_SCRIPT_PATH, kv_get('session_uname',options,'_'),ssh_keyfile,hyena_remote_setup_cmds);
     fprintf('Submitted hyena job in %s to host %s \n', task_dir, hyena_host);
     job_id=1;
 else
