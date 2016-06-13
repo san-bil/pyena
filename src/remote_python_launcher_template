@@ -1,0 +1,10 @@
+#!/bin/bash
+echo `hostname`
+
+cd $TASK_DIR
+source activate $TARGET_CONDA_ENV
+PYTHONPATH=$$PYTHONPATH:$PYTHON_PATH_ADDITIONS
+
+python -c "import sys;print('\n'.join(sys.path));import cloudpickle;from pyena.src.core import run_remote_job;run_remote_job('$DATA_PATH');sys.exit()"
+
+

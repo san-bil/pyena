@@ -11,12 +11,13 @@ from sbpy_utils.core.file_system import touch, mkdir_p
 from sbpy_utils.core.key_val import kvg,kv_get, kv_read, get_mutable_opts
 from sbpy_utils.core.my_datetime import get_simple_date
 from sbpy_utils.core.string_manipulation import filter_empty_strings, multifilter_string_list
+from sbpy_utils.core.synchronization import pause_with_countdown
 
 def launch_condor_job_via_hyena(remote_host, script_path, uname, ssh_key=get_default_ssh_key(),remote_setup_cmds=''):
     
     current_dir = os.path.dirname(os.path.realpath(__file__))
     launcher_script = os.path.join(current_dir,'launch_condor_job_via_hyena.sh')
-    cmd = ' '.join([ld_lib_path_fix,  launcher_script,remote_host,script_path,uname,ssh_key,remote_setup_cmds])
+    cmd = ' '.join([launcher_script,remote_host,script_path,uname,ssh_key,remote_setup_cmds])
     cmd_res = my_system(cmd)
 
     print(cmd_res)
@@ -124,7 +125,7 @@ def find_free_hyena_machines(candidate_list_provider, user_limit=1, hyena_worker
 
 def get_hyena_host_usage_ratios(hyena_pool):
 
-    hyena_machines = kv_getkeys(hyena_pool);
+    hyena_machines = hyena_pool.keys()
 
     ratios=[];
     for hyena_machine in hyena_pool:
@@ -141,3 +142,21 @@ def create_hyena_worker_pool(hyena_machines,jobs_per_host):
         pool[hyena_machine]={'host_slots_used':0,'host_slots_total':jobs_per_host}
     return pool
 
+
+def get_next_hyena_host(hyena_pool):
+
+    hyena_machines = hyena_pool.keys()
+    while(True):
+        ratios = get_hyena_host_usage_ratios(hyena_pool)
+        min_ratio=min(ratios)
+        if(min_ratio<1):
+            break;
+        
+        print('\nget_next_hyena_host(): waiting for a hyena node to free up. All currently in use.\n\n')
+        pause_with_countdown(10);
+    
+    
+    mindex = [i for i,r in enumerate(ratios) if r==min_ratio][0]
+    
+    next_host = hyena_machines[mindex];
+    return next_host

@@ -5,7 +5,12 @@ from sbpy_utils.core.command_line import chmod,my_system, touch, easy_file_appen
 from sbpy_utils.core.file_system import mkdir_p
 from sbpy_utils.core.key_val import kvg,kv_get, kv_read, get_mutable_opts
 from sbpy_utils.core.my_datetime import get_simple_date
-from sbpy_utils.core.my_io import my_readlines
+from sbpy_utils.core.my_io import my_readlines,my_writelines
+from profiles.vanilla.condor import get_vanilla_condor_profile
+from pyena import launch_condor_job_via_hyena
+import cloudpickle
+import logging
+
 
 def run_remote_job(experiment_setup_data_path):
 
@@ -15,16 +20,15 @@ def run_remote_job(experiment_setup_data_path):
     if not os.path.exists(try_folder):
         os.makedirs(try_folder)
         
-    simple_date=str(datetime.datetime.now()).replace(':','_').replace(' ','_');
+    simple_date=get_simple_date()
     try_file = os.path.join(try_folder,simple_date)+'.log' 
     
     open(try_file,'a').close()
-    global job_root_dir
-    exp_data=pickle.load(open(experiment_setup_data_path,'rb'))
+    exp_data=cloudpickle.load(open(experiment_setup_data_path,'rb'))
     worker_task = exp_data['worker_task']
     worker_args = exp_data['worker_args']
 
-    job_root_dir = task_dir;
+    set_global_job_root_dir(task_dir)
 
     try:
         worker_result = worker_task(*worker_args);
@@ -32,7 +36,7 @@ def run_remote_job(experiment_setup_data_path):
         simple_finish_date=get_simple_date()
         pickle.dump(open(os.path.join(task_dir,'worker_result.p'),'wb'), {'worker_result': worker_result});
     except Exception as job_err:
-        print(job_err)
+        logging.exception(job_err)
         sys.exit("error caught in run_remote_job()")
 
 def dollar_template_file(template_path,template_dict,output_path):
@@ -61,16 +65,18 @@ def submit_to_condor(data_path,task_dir='',options={}):
         submit_host = options['submit_host']
     
     local_host=socket.gethostname()
-    local_host_bare=local_host.split('@')[1].split('.')[0]
-    is_remote_host= not local_host_bare==submit_host
+    submit_host_bare=submit_host.split('@')[1].split('.')[0]
+    is_remote_host= not local_host==submit_host_bare
     
     CONDOR_TASK_DESC_PATH = os.path.join(task_dir,'condor_task_desc.cmd');
     OUTPUT_FILE = os.path.join(task_dir,'output.txt');
     ERROR_FILE = os.path.join(task_dir,'err.txt');
     LOG_FILE = os.path.join(task_dir,'log.txt');
-    LOCAL_CALLER_SCRIPT_PATH = os.path.join(task_dir,'remote_matlab_launcher.sh');  
+    LOCAL_CALLER_SCRIPT_PATH = os.path.join(task_dir,'remote_python_launcher.sh');
+    LOCAL_DEBUG_TASK_PATH=os.path.join(task_dir,'remote_python_debug_launcher.py');
+    LOCAL_PATH_ADDITIONS_LIST=os.path.join(task_dir,'python_path_additions.txt');
     
-    if condor_profile_provider in options:
+    if 'condor_profile_provider' in options:
         condor_profile_provider = options['condor_profile_provider']
     else:
         condor_profile_provider = get_vanilla_condor_profile
@@ -92,12 +98,12 @@ def submit_to_condor(data_path,task_dir='',options={}):
                                    'LOCAL_CALLER_SCRIPT_PATH':LOCAL_CALLER_SCRIPT_PATH,
                                    'JOB_REQUIREMENTS':JOB_REQUIREMENTS};
 
-    if ssh_key in options:
+    if 'ssh_key' in options:
         ssh_key=options['ssh_key']
     else:
         ssh_key=os.path.join(os.path.expanduser('~'),'.ssh/id_rsa')
 
-    if(os.path.isfile(ssh_key)):
+    if(not os.path.isfile(ssh_key)):
         raise Exception('ssh key %s not found.' % ssh_key)
     
     
@@ -110,19 +116,32 @@ def submit_to_condor(data_path,task_dir='',options={}):
     
     current_dir = os.path.dirname(os.path.realpath(__file__))
     remote_python_launcher_template_path = os.path.join(current_dir,'remote_python_launcher_template')
+    remote_python_debug_template_path = os.path.join(current_dir,'remote_python_debug_template.py')
     condor_task_desc_template_path = os.path.join(current_dir,'condor_task_desc_template')
     
-    tmpfile_path_1=Templater.fill(remote_python_launcher_template_path,
-                                  {'DATA_PATH':data_path,'TASK_DIR':task_dir},
-                                  get_pyena_tempfile('sh','remote_python_launcher')
-                                  );
+    target_conda_env=kv_get('target_conda_env', options,'')
+    python_path_additions=kv_get('python_path_additions', options,'')
+    tmpfile_path_1=dollar_template_file(remote_python_launcher_template_path,
+                                        {'DATA_PATH':data_path,
+                                         'TASK_DIR':task_dir,
+                                         'TARGET_CONDA_ENV':target_conda_env,
+                                         'PYTHON_PATH_ADDITIONS':python_path_additions,
+                                        },
+                                        get_pyena_tempfile('sh','remote_python_launcher')
+                                        );
     
-    tmpfile_path_2=Templater.fill(condor_task_desc_template_path,
+    tmpfile_path_2=dollar_template_file(condor_task_desc_template_path,
                                   condor_task_desc_dictionary,
                                   get_pyena_tempfile('cmd','condor_task_desc'));
 
+    python_path_additions_lines=python_path_additions.split(':')
+    tmpfile_path_3=get_pyena_tempfile('txt','python_path_additions')
+    my_writelines(python_path_additions_lines, tmpfile_path_3)
+
     rsync(tmpfile_path_1, LOCAL_CALLER_SCRIPT_PATH, *rsync_extra_args);
     rsync(tmpfile_path_2, CONDOR_TASK_DESC_PATH, *rsync_extra_args);
+    rsync(tmpfile_path_3, LOCAL_PATH_ADDITIONS_LIST, *rsync_extra_args);
+    rsync(remote_python_debug_template_path,LOCAL_DEBUG_TASK_PATH)
 
     chmod(LOCAL_CALLER_SCRIPT_PATH,'755',*chmod_extra_args);
 
@@ -147,7 +166,7 @@ def submit_to_condor(data_path,task_dir='',options={}):
         job_id=1;
     return (job_id,submit_host)
 
-
+job_root_dir=''
 def condor_get_job_submission_id(message):
 
     lines = message.split('\n');
@@ -184,7 +203,7 @@ def get_mutable_task_opts(key,default,handler=(lambda x:float(x))):
     return out
     
 def get_mutable_pertask_opts(task_ctr,key,default,handler=(lambda x:float(x))):
-    out = handler(get_mutable_opts(key,ggjrd(sprintf('mutable_task_opts_%d.ini',task_ctr)), default));
+    out = handler(get_mutable_opts(key,ggjrd('mutable_task_opts_%d.ini'%task_ctr), default));
     easy_file_append('"(task %d) %s = %s"' % (task_ctr, key, str(default)), ggjrd('mutable_task_opts_names'));
     return out
 

@@ -1,0 +1,9 @@
+#!/usr/bin/python2.7
+import os
+
+os.chdir(os.path.dirname(os.path.realpath(__file__)))
+
+
+python -c "import sys; sys.path+=open($) ; print('\n'.join(sys.path));import cloudpickle;from pyena.src.core import run_remote_job;run_remote_job('$DATA_PATH');sys.exit()"
+
+

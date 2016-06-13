@@ -2,22 +2,8 @@
 echo `hostname`
 
 cd $TASK_DIR
+source activate $CONDAENV
+PYTHONPATH=$PYTHONPATH:$PYTHON_PATH_ADDITIONS
 
-if [ "$(uname)" == "Darwin" ]; then
-    matlab_version=$(greadlink -f $(which matlab) | ack -o "R[0-9]+[ab]+" | ack -o "[0-9]+");
-else
-    matlab_version=$(readlink -f $(which matlab) | grep -oP "R[0-9]+[ab]+" | grep -oP "[0-9]+");
-fi
+python -c "from pyena.src.core import run_remote_job;run_remote_job('$DATA_PATH');exit;"
 
-matlab_gt_2013=$(python -c "print('$matlab_version >= 2013')")
-
-if [ $matlab_version -gt 2013 ]
-then
-
-    matlab -nodisplay -r "remote_add_relevant_src_paths('$DATA_PATH');run_remote_job('$DATA_PATH');exit;"
-
-else
-
-    echo -e "Matador: The only Matlab installation found is $matlab_version, which is too old."
-
-fi
